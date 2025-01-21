@@ -50,22 +50,25 @@ public class PlayerController : MonoBehaviour
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
         
-        Debug.Log(rollInput);
+       // Debug.Log(rollInput);
     }
 
     void FixedUpdate()
     {
-
         // wing stuff
 
         Wings.localScale = new Vector3(originalXScale,originalYScale,wingInput*10);
 
-        Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
-float forwardSpeed = forwardVelocity.magnitude;
+       Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+float localVerticalSpeed = localVelocity.y; // Speed along the local Y-axis
+Debug.Log("Local Vertical Speed: " + localVerticalSpeed);
 
-        Vector3 lift = transform.up * forwardSpeed * wingInput*liftMult;
+
+        Vector3 lift = transform.forward * localVerticalSpeed * wingInput * liftMult;
+rb.AddForce(lift);
+        
         // Vector3 drag = transform.forward * -dragMult*wingInput;
-         rb.AddForce(lift);
+       
 
       
        if (isTipGrounded) // jump mechanic
