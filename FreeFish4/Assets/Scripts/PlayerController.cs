@@ -29,9 +29,9 @@ public class PlayerController : MonoBehaviour
        // Debug.Log("Axis 3: " + Input.GetAxis("Axis 3"));
       //  Debug.Log("Axis 10: " + Input.GetAxis("Axis 10"));
       wingInput= Input.GetAxis("Fire1");
-      if (wingInput>1.0f){
-      Debug.Log("Fire 1");
-      }
+      
+      Debug.Log(wingInput);
+      
 
       if (spaceInput>1.0f){
       Debug.Log("Fire 1");
@@ -55,7 +55,7 @@ public class PlayerController : MonoBehaviour
     Vector3 bounceDirection = transform.up; // Local "up" direction
     rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
 
-    Debug.Log("Bounce Direction: {bounceDirection}, Force: {accumulatedForce * 3}");
+    
 
     isTipGrounded = false; // Prevent multiple bounces
 }
