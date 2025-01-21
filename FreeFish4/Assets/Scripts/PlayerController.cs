@@ -2,9 +2,15 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public Transform Wings;
+    private float originalXScale;
+    private float originalYScale;
+    public float liftMult=1f;
+    public float dragMult=0.1f;
     public float spaceInput;
     public float horizontalInput;
     public float verticalInput;
+    public float rollInput;
 
     public float wingInput;
     public float bounceForceMultiplier=3;
@@ -18,35 +24,51 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        // Find the Wings object
+    Wings = transform.Find("Wings");
+
+    if (Wings != null)
+    {
+        // Store the original X and Y scale values
+        originalXScale = Wings.localScale.x;
+        originalYScale = Wings.localScale.y;
+    }
+    else
+    {
+        Debug.LogError("Wings object not found!");
+    }
     }
 
     void Update()
     {
+            // inputs
 
-     
-
-
-       // Debug.Log("Axis 3: " + Input.GetAxis("Axis 3"));
-      //  Debug.Log("Axis 10: " + Input.GetAxis("Axis 10"));
-      wingInput= Input.GetAxis("Fire1");
-      
-      Debug.Log(wingInput);
-      
-
-      if (spaceInput>1.0f){
-      Debug.Log("Fire 1");
-      }
-   
-
+        wingInput= Input.GetAxis("Fire1");
         spaceInput = Input.GetAxis("Jump");
+        rollInput = Input.GetAxis("Roll");
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
+        
+        Debug.Log(rollInput);
     }
 
     void FixedUpdate()
     {
-       //  Debug.Log( rb.linearVelocity.magnitude);
-       if (isTipGrounded)
+
+        // wing stuff
+
+        Wings.localScale = new Vector3(originalXScale,originalYScale,wingInput*10);
+
+        Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
+float forwardSpeed = forwardVelocity.magnitude;
+
+        Vector3 lift = transform.up * forwardSpeed * wingInput*liftMult;
+        // Vector3 drag = transform.forward * -dragMult*wingInput;
+         rb.AddForce(lift);
+
+      
+       if (isTipGrounded) // jump mechanic
 {
     // Get the magnitude of the velocity
     var accumulatedForce = rb.linearVelocity.magnitude;
@@ -60,10 +82,10 @@ public class PlayerController : MonoBehaviour
     isTipGrounded = false; // Prevent multiple bounces
 }
 
-        //Debug.Log("Current Velocity (Vector3): " + rb.linearVelocity);
+        // char cotrolls
 
         rb.AddForce(Vector3.up * spaceInput * speed);
-        transform.Rotate(verticalInput * rotSpeed, 0, horizontalInput * rotSpeed);
+        transform.Rotate(verticalInput * rotSpeed, rollInput*rotSpeed/2, horizontalInput * rotSpeed);
 
         
     }
