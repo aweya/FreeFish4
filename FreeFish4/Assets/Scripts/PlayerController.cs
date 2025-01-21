@@ -32,6 +32,10 @@ public class PlayerController : MonoBehaviour
       if (wingInput>1.0f){
       Debug.Log("Fire 1");
       }
+
+      if (spaceInput>1.0f){
+      Debug.Log("Fire 1");
+      }
    
 
         spaceInput = Input.GetAxis("Jump");
@@ -41,7 +45,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-         Debug.Log( rb.linearVelocity.magnitude);
+       //  Debug.Log( rb.linearVelocity.magnitude);
        if (isTipGrounded)
 {
     // Get the magnitude of the velocity
@@ -51,7 +55,7 @@ public class PlayerController : MonoBehaviour
     Vector3 bounceDirection = transform.up; // Local "up" direction
     rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
 
-    Debug.Log($"Bounce Direction: {bounceDirection}, Force: {accumulatedForce * 3}");
+    Debug.Log("Bounce Direction: {bounceDirection}, Force: {accumulatedForce * 3}");
 
     isTipGrounded = false; // Prevent multiple bounces
 }
