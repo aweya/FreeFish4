@@ -171,8 +171,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: FloatingIslandsModels
       objectReference: {fileID: 0}
+    - target: {fileID: 4083501151425157549, guid: 34d9d14423c1abd47bc0954a355e79b1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 78.2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -3756473180518285571, guid: 34d9d14423c1abd47bc0954a355e79b1, type: 3}
+    - {fileID: 8513859187771203891, guid: 34d9d14423c1abd47bc0954a355e79b1, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 34d9d14423c1abd47bc0954a355e79b1, type: 3}
