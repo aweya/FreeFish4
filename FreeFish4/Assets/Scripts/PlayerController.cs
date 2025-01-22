@@ -53,50 +53,67 @@ public class PlayerController : MonoBehaviour
        // Debug.Log(rollInput);
     }
 
-    void FixedUpdate()
-    {
-        // wing stuff
-
-        Wings.localScale = new Vector3(originalXScale,originalYScale,wingInput*10);
-
-       Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
-float localVerticalSpeed = localVelocity.y; // Speed along the local Y-axis
-Debug.Log("Local Vertical Speed: " + localVerticalSpeed);
-
-
-        Vector3 lift = transform.forward * localVerticalSpeed * wingInput * liftMult;
-rb.AddForce(lift);
-        
-        // Vector3 drag = transform.forward * -dragMult*wingInput;
-       
-
-      
-       if (isTipGrounded) // jump mechanic
+void FixedUpdate()
 {
-    // Get the magnitude of the velocity
-    var accumulatedForce = rb.linearVelocity.magnitude;
+    // Wing scaling
+    Wings.localScale = new Vector3(originalXScale, originalYScale, wingInput * 10);
 
-    // Apply force in the local Y-axis direction (relative to the pogo stick's orientation)
-    Vector3 bounceDirection = transform.up; // Local "up" direction
-    rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
+// Corrected airflow direction (opposite to the movement direction)
+Vector3 airflow = rb.linearVelocity.normalized; // Velocity direction (air moves opposite)
 
-    
+// Angle of Attack (AoA) calculation
+float angleOfAttack = 0;
+    Debug.Log($"Angle of Attack: {angleOfAttack}");
 
-    isTipGrounded = false; // Prevent multiple bounces
-}
+    // Forward speed (airflow magnitude along the local Y-axis)
+    Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
+    float forwardSpeed = forwardVelocity.magnitude;
 
-        // char cotrolls
+    // Calculate lift direction (local Z-axis, perpendicular to airflow)
+    Vector3 liftDirection = transform.up; // Local Z-axis is up for lift
+    float liftCoefficient = Mathf.Clamp01((15f - Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
+    Vector3 lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
 
-        rb.AddForce(Vector3.up * spaceInput * speed);
-        transform.Rotate(verticalInput * rotSpeed, rollInput*rotSpeed/2, horizontalInput * rotSpeed);
+    // Apply lift force
+    rb.AddForce(lift);
 
-        
+    // Calculate drag direction (opposes airflow)
+    Vector3 drag = -airflow * forwardSpeed * wingInput * dragMult;
+
+    // Apply drag force
+    rb.AddForce(drag);
+
+    // Debug forces for testing
+    Debug.Log($"Lift: {lift}, Drag: {drag}");
+
+    // Jump mechanic
+    if (isTipGrounded)
+    {
+        Vector3 bounceDirection = transform.up; // Local "up" direction
+        float accumulatedForce = rb.linearVelocity.magnitude;
+        rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
+        isTipGrounded = false; // Prevent multiple bounces
     }
 
-    void OnDrawGizmos()
+    // Character controls (rotations and thrust)
+    rb.AddForce(Vector3.up * spaceInput * speed);
+    transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed);
+
+    // Reset functionality
+    if (Input.GetKeyDown(KeyCode.R))
+    {
+        ResetGlider();
+    }
+}
+
+void ResetGlider()
 {
-    Gizmos.color = Color.green;
-    Gizmos.DrawLine(transform.position, transform.position + transform.up * 2); // Visualize the local up direction
+    // Reset position and velocity
+    rb.linearVelocity = Vector3.zero;
+    rb.angularVelocity = Vector3.zero;
+    transform.position = new Vector3(0, 10, 0); // Adjust to your desired reset position
+    transform.rotation = Quaternion.identity; // Reset orientation
+    Debug.Log("Glider Reset");
 }
 
 
