@@ -47,10 +47,10 @@ public class PlayerController : MonoBehaviour
         wingInput= Input.GetAxis("Fire1");
         spaceInput = Input.GetAxis("Jump");
         rollInput = Input.GetAxis("Roll");
-        horizontalInput = Input.GetAxis("Horizontal");
+        horizontalInput = Input.GetAxis("Yaw+");
         verticalInput = Input.GetAxis("Vertical");
         
-       // Debug.Log(rollInput);
+        Debug.Log(horizontalInput);
     }
 
 void FixedUpdate()
@@ -58,20 +58,25 @@ void FixedUpdate()
     // Wing scaling
     Wings.localScale = new Vector3(originalXScale, originalYScale, wingInput * 10);
 
-// Corrected airflow direction (opposite to the movement direction)
-Vector3 airflow = rb.linearVelocity.normalized; // Velocity direction (air moves opposite)
+// Calculate airflow (opposite of the velocity direction)
+Vector3 airflow = rb.linearVelocity.normalized; // Airflow moves opposite to the glider's movement
 
-// Angle of Attack (AoA) calculation
-float angleOfAttack = 0;
-    Debug.Log($"Angle of Attack: {angleOfAttack}");
+// Calculate the Angle of Attack (AoA) between the glider's forward direction and airflow
+float angleOfAttack = Vector3.SignedAngle(transform.up, airflow, transform.right);
+//float angleOfAttack =0f;
+
+// Debug AoA to check if it's correct
+//Debug.Log($"Angle of Attack: {angleOfAttack}");
+//Debug.Log($"airflow: {airflow}");
+
 
     // Forward speed (airflow magnitude along the local Y-axis)
     Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
     float forwardSpeed = forwardVelocity.magnitude;
 
     // Calculate lift direction (local Z-axis, perpendicular to airflow)
-    Vector3 liftDirection = transform.up; // Local Z-axis is up for lift
-    float liftCoefficient = Mathf.Clamp01((15f - Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
+    Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
+    float liftCoefficient = Mathf.Clamp01((15f + Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
     Vector3 lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
 
     // Apply lift force
@@ -97,7 +102,7 @@ float angleOfAttack = 0;
 
     // Character controls (rotations and thrust)
     rb.AddForce(Vector3.up * spaceInput * speed);
-    transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed);
+    transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed/1.5f);
 
     // Reset functionality
     if (Input.GetKeyDown(KeyCode.R))
