@@ -5,127 +5,148 @@ public class PlayerController : MonoBehaviour
     public Transform Wings;
     private float originalXScale;
     private float originalYScale;
-    public float liftMult=1f;
-    public float dragMult=0.1f;
+    public float liftMult = 1f;
+    public float dragMult = 0.1f;
     public float spaceInput;
     public float horizontalInput;
     public float verticalInput;
     public float rollInput;
 
     public float wingInput;
-    public float bounceForceMultiplier=3;
+    public float bounceForceMultiplier = 3;
     public float speed = 80.0f;
     public float rotSpeed = 3f;
-   // public float bounceForceMultiplier = 1.5f; // Multiplier for the bounce force based on impact
     public bool isTipGrounded = false;
 
     private Rigidbody rb;
+
+    // Debug variables
+    public float debugArrowScale = 10f; // Scale for lift arrow
+    public Vector3 arrowOffset = Vector3.up * 2; // Offset for better visibility
+
+    private Vector3 lift; // Store lift force
+    private Vector3 airflow; // Store airflow direction
+    private float angleOfAttack; // Store AoA value
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
         // Find the Wings object
-    Wings = transform.Find("Wings");
+        Wings = transform.Find("Wings");
 
-    if (Wings != null)
-    {
-        // Store the original X and Y scale values
-        originalXScale = Wings.localScale.x;
-        originalYScale = Wings.localScale.y;
-    }
-    else
-    {
-        Debug.LogError("Wings object not found!");
-    }
+        if (Wings != null)
+        {
+            // Store the original X and Y scale values
+            originalXScale = Wings.localScale.x;
+            originalYScale = Wings.localScale.y;
+        }
+        else
+        {
+            Debug.LogError("Wings object not found!");
+        }
     }
 
     void Update()
     {
-            // inputs
-
-        wingInput= Input.GetAxis("Fire1");
+        // Inputs
+        wingInput = Input.GetAxis("Fire1");
         spaceInput = Input.GetAxis("Jump");
         rollInput = Input.GetAxis("Roll");
         horizontalInput = Input.GetAxis("Yaw+");
         verticalInput = Input.GetAxis("Vertical");
-        
+
         Debug.Log(horizontalInput);
     }
 
-void FixedUpdate()
-{
-    // Wing scaling
-    Wings.localScale = new Vector3(originalXScale, originalYScale, wingInput * 10);
-
-// Calculate airflow (opposite of the velocity direction)
-Vector3 airflow = rb.linearVelocity.normalized; // Airflow moves opposite to the glider's movement
-
-// Calculate the Angle of Attack (AoA) between the glider's forward direction and airflow
-float angleOfAttack = Vector3.SignedAngle(transform.up, airflow, transform.right);
-//float angleOfAttack =0f;
-
-// Debug AoA to check if it's correct
-//Debug.Log($"Angle of Attack: {angleOfAttack}");
-//Debug.Log($"airflow: {airflow}");
-
-
-    // Forward speed (airflow magnitude along the local Y-axis)
-    Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
-    float forwardSpeed = forwardVelocity.magnitude;
-
-    // Calculate lift direction (local Z-axis, perpendicular to airflow)
-    Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
-    float liftCoefficient = Mathf.Clamp01((15f + Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
-    Vector3 lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
-
-    // Apply lift force
-    rb.AddForce(lift);
-
-    // Calculate drag direction (opposes airflow)
-    Vector3 drag = -airflow * forwardSpeed * wingInput * dragMult;
-
-    // Apply drag force
-    rb.AddForce(drag);
-
-    // Debug forces for testing
-    Debug.Log($"Lift: {lift}, Drag: {drag}");
-
-    // Jump mechanic
-    if (isTipGrounded)
+    void FixedUpdate()
     {
-        Vector3 bounceDirection = transform.up; // Local "up" direction
-        float accumulatedForce = rb.linearVelocity.magnitude;
-        rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
-        isTipGrounded = false; // Prevent multiple bounces
+        // Wing scaling
+        Wings.localScale = new Vector3(originalXScale, originalYScale, wingInput * 10);
+
+        // Calculate airflow (opposite of velocity direction)
+        airflow = rb.linearVelocity.normalized;
+
+        // Calculate the Angle of Attack (AoA)
+        //angleOfAttack = Vector3.SignedAngle(transform.up, airflow, transform.right);
+        angleOfAttack = 0;
+
+        // Forward speed
+        Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
+        float forwardSpeed = forwardVelocity.magnitude;
+
+        // Calculate lift direction (perpendicular to airflow)
+        Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
+        float liftCoefficient = Mathf.Clamp01((15f + Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
+
+        // Calculate lift force
+        lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
+
+        // Apply lift force
+        rb.AddForce(lift);
+
+        // Calculate drag force (opposes airflow)
+        Vector3 drag = -airflow * forwardSpeed * wingInput * dragMult;
+
+        // Apply drag force
+        rb.AddForce(drag);
+
+        // Debug forces for testing
+        Debug.Log($"Lift: {lift}, Drag: {drag}");
+
+        // Jump mechanic
+        if (isTipGrounded)
+        {
+            Vector3 bounceDirection = transform.up; // Local "up" direction
+            float accumulatedForce = rb.linearVelocity.magnitude;
+            rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
+            isTipGrounded = false; // Prevent multiple bounces
+        }
+
+        // Character controls (rotations and thrust)
+        rb.AddForce(Vector3.up * spaceInput * speed);
+        transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed / 1.5f);
+
+        // Reset functionality
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetGlider();
+        }
     }
 
-    // Character controls (rotations and thrust)
-    rb.AddForce(Vector3.up * spaceInput * speed);
-    transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed/1.5f);
-
-    // Reset functionality
-    if (Input.GetKeyDown(KeyCode.R))
+    void OnDrawGizmos()
     {
-        ResetGlider();
+        if (rb == null) return;
+
+        // Draw lift arrow
+        Gizmos.color = Color.green;
+        Vector3 startPosition = transform.position + arrowOffset;
+        Vector3 endPosition = startPosition + lift * debugArrowScale;
+        Gizmos.DrawLine(startPosition, endPosition);
+        Gizmos.DrawSphere(endPosition, 0.1f);
+
+        // Draw airflow arrow
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(transform.position, transform.position + airflow * debugArrowScale);
+
+        // Log AoA
+        Debug.Log($"AoA (degrees): {angleOfAttack}");
     }
-}
 
-void ResetGlider()
-{
-    // Reset position and velocity
-    rb.linearVelocity = Vector3.zero;
-    rb.angularVelocity = Vector3.zero;
-    transform.position = new Vector3(0, 10, 0); // Adjust to your desired reset position
-    transform.rotation = Quaternion.identity; // Reset orientation
-    Debug.Log("Glider Reset");
-}
-
+    void ResetGlider()
+    {
+        // Reset position and velocity
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        transform.position = new Vector3(0, 10, 0); // Adjust to your desired reset position
+        transform.rotation = Quaternion.identity; // Reset orientation
+        Debug.Log("Glider Reset");
+    }
 
     public void ApplyBounce(float impactForce)
     {
         // Apply bounce force proportional to the impact force
         Debug.Log(impactForce);
-        rb.AddForce(Vector3.up * impactForce*10 , ForceMode.Impulse);
+        rb.AddForce(Vector3.up * impactForce * 10, ForceMode.Impulse);
     }
 }
