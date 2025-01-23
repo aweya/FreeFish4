@@ -68,7 +68,8 @@ public class PlayerController : MonoBehaviour
         airflow = rb.linearVelocity.normalized;
 
         // Calculate the Angle of Attack (AoA)
-        angleOfAttack = Vector3.SignedAngle(transform.up, airflow, transform.right);
+        angleOfAttack = Vector3.SignedAngle(Wings.up, airflow, Wings.right);
+
       
 
         // Forward speed
