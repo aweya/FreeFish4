@@ -133,7 +133,7 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"AoA (degrees): {angleOfAttack}");
     }
 
-    void ResetGlider()
+    public void ResetGlider()
     {
         // Reset position and velocity
         rb.linearVelocity = Vector3.zero;
