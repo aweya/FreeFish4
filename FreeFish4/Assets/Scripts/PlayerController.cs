@@ -52,8 +52,8 @@ public class PlayerController : MonoBehaviour
         // Inputs
         wingInput = Input.GetAxis("Fire1");
         spaceInput = Input.GetAxis("Jump");
-        rollInput = Input.GetAxis("Roll");
-        horizontalInput = Input.GetAxis("Yaw+");
+        rollInput = Input.GetAxis("Yaw+");
+        horizontalInput = Input.GetAxis("Roll");
         verticalInput = Input.GetAxis("Vertical");
 
         Debug.Log(horizontalInput);
@@ -68,8 +68,9 @@ public class PlayerController : MonoBehaviour
         airflow = rb.linearVelocity.normalized;
 
         // Calculate the Angle of Attack (AoA)
-        //angleOfAttack = Vector3.SignedAngle(transform.up, airflow, transform.right);
-        angleOfAttack = 0;
+        angleOfAttack = Vector3.SignedAngle(Wings.up, airflow, Wings.right);
+
+      
 
         // Forward speed
         Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
@@ -105,7 +106,7 @@ public class PlayerController : MonoBehaviour
 
         // Character controls (rotations and thrust)
         rb.AddForce(Vector3.up * spaceInput * speed);
-        transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed, horizontalInput * rotSpeed / 1.5f);
+        transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed /2f, horizontalInput * rotSpeed );
 
         // Reset functionality
         if (Input.GetKeyDown(KeyCode.R))
@@ -128,9 +129,6 @@ public class PlayerController : MonoBehaviour
         // Draw airflow arrow
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(transform.position, transform.position + airflow * debugArrowScale);
-
-        // Log AoA
-        Debug.Log($"AoA (degrees): {angleOfAttack}");
     }
 
     void ResetGlider()
