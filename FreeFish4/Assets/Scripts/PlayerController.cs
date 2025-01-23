@@ -56,7 +56,7 @@ public class PlayerController : MonoBehaviour
         horizontalInput = Input.GetAxis("Roll");
         verticalInput = Input.GetAxis("Vertical");
 
-        Debug.Log(horizontalInput);
+        
     }
 
     void FixedUpdate()
@@ -64,11 +64,16 @@ public class PlayerController : MonoBehaviour
         // Wing scaling
         Wings.localScale = new Vector3(originalXScale, originalYScale, wingInput * 10);
 
-        // Calculate airflow (opposite of velocity direction)
-        airflow = rb.linearVelocity.normalized;
+       // Calculate airflow (opposite to velocity)
+airflow = rb.linearVelocity.normalized;
 
-        // Calculate the Angle of Attack (AoA)
-        angleOfAttack = Vector3.SignedAngle(Wings.up, airflow, Wings.right);
+// Project airflow onto YX plane
+Vector3 projectedAirflow = Vector3.ProjectOnPlane(airflow, Wings.forward);
+
+// Calculate AoA relative to the YX plane
+angleOfAttack = Vector3.SignedAngle(Wings.up, projectedAirflow, Wings.right);
+
+        Debug.Log(angleOfAttack);
 
       
 
@@ -78,7 +83,24 @@ public class PlayerController : MonoBehaviour
 
         // Calculate lift direction (perpendicular to airflow)
         Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
-        float liftCoefficient = Mathf.Clamp01((15f + Mathf.Abs(angleOfAttack)) / 15f); // Simplified lift curve
+       
+       //lift cals
+       float optimalAoA = 15f; // AoA for max lift
+float stallAoA = 30f;   // AoA where stall begins
+
+float normalizedAoA = angleOfAttack / optimalAoA;
+float liftCoefficient;
+
+// Parabolic lift curve with stall behavior
+if (Mathf.Abs(angleOfAttack) <= stallAoA)
+{
+    liftCoefficient = Mathf.Max(0f, 1f - Mathf.Pow(normalizedAoA, 2));
+}
+else
+{
+    // Post-stall: Lift drops rapidly
+    liftCoefficient = Mathf.Max(0f, 1f - ((Mathf.Abs(angleOfAttack) - stallAoA) / stallAoA));
+}
 
         // Calculate lift force
         lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
@@ -136,7 +158,7 @@ public class PlayerController : MonoBehaviour
         // Reset position and velocity
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        transform.position = new Vector3(0, 10, 0); // Adjust to your desired reset position
+        transform.position = new Vector3(416,75 , 123); // Adjust to your desired reset position
         transform.rotation = Quaternion.identity; // Reset orientation
         Debug.Log("Glider Reset");
     }
