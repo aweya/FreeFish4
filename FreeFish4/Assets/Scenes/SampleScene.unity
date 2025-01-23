@@ -707,7 +707,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1672994876610804804, guid: e3757088dcfd4714ca399fd303de268e, type: 3}
       propertyPath: liftMult
-      value: 3
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1672994876610804804, guid: e3757088dcfd4714ca399fd303de268e, type: 3}
       propertyPath: rotSpeed

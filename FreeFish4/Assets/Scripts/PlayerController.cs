@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     public float speed = 80.0f;
     public float rotSpeed = 3f;
     public bool isTipGrounded = false;
+    public float sideLift;
+
+    public Vector3 sideLiftDirection;
 
     private Rigidbody rb;
 
@@ -73,20 +76,31 @@ Vector3 projectedAirflow = Vector3.ProjectOnPlane(airflow, Wings.forward);
 // Calculate AoA relative to the YX plane
 angleOfAttack = Vector3.SignedAngle(Wings.up, projectedAirflow, Wings.right);
 
-        Debug.Log(angleOfAttack);
+
 
       
 
         // Forward speed
-        Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.forward);
+        Vector3 forwardVelocity = Vector3.Project(rb.linearVelocity, transform.up);
         float forwardSpeed = forwardVelocity.magnitude;
 
+        
+
         // Calculate lift direction (perpendicular to airflow)
-        Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
+       Vector3 liftDirection = Vector3.Cross(airflow, -transform.right).normalized;
+
+ 
+
+// Ensure liftDirection doesn't flip backward
+if (Vector3.Dot(liftDirection, transform.up) < 0)
+{
+    liftDirection = -liftDirection;
+}
+
        
        //lift cals
        float optimalAoA = 15f; // AoA for max lift
-float stallAoA = 30f;   // AoA where stall begins
+float stallAoA = 40f;   // AoA where stall begins
 
 float normalizedAoA = angleOfAttack / optimalAoA;
 float liftCoefficient;
@@ -102,17 +116,39 @@ else
     liftCoefficient = Mathf.Max(0f, 1f - ((Mathf.Abs(angleOfAttack) - stallAoA) / stallAoA));
 }
 
+
+//liftCoefficient=1;
+
+//Debug.Log(forwardSpeed );
+
+float helpSpeed = forwardSpeed;
+if (helpSpeed<3f){
+    helpSpeed=forwardSpeed*2f;
+}
+if (helpSpeed>7f){
+    helpSpeed=forwardSpeed/1.5f;
+}
+if (helpSpeed>10f){
+    helpSpeed=forwardSpeed/2f;
+}
         // Calculate lift force
-        lift = liftDirection * forwardSpeed * wingInput * liftCoefficient * liftMult;
+        lift = liftDirection * helpSpeed * wingInput * liftCoefficient * liftMult;
 
         // Apply lift force
         rb.AddForce(lift);
+
+        // Calculate banking lift for smoother turning
+ sideLiftDirection = Vector3.Cross(transform.forward, Vector3.up).normalized;
+
+// Add lateral lift to aid turning at low speeds
+sideLift = wingInput * forwardSpeed * liftCoefficient * 0.3f; // Adjust 0.3f for tuning
+rb.AddForce(sideLiftDirection * sideLift);
 
         // Calculate drag force (opposes airflow)
         Vector3 drag = -airflow * forwardSpeed * wingInput * dragMult;
 
         // Apply drag force
-        rb.AddForce(drag);
+       // rb.AddForce(drag);
 
         // Debug forces for testing
         Debug.Log($"Lift: {lift}, Drag: {drag}");
@@ -126,16 +162,32 @@ else
             isTipGrounded = false; // Prevent multiple bounces
         }
 
+        // add a rudder nutralizer
+
+      // Calculate the difference between the player's forward direction and the flight path
+Vector3 flightDirection = rb.linearVelocity.normalized; // Flight direction (velocity-based)
+Vector3 playerDirection = transform.forward; // Player's current forward direction
+
+// Calculate the angle difference (yaw) between the directions
+
+float rudderAngleDifference = Vector3.SignedAngle(playerDirection, flightDirection, Vector3.up);
+
+// Apply a smoothing factor and wing input for how fast the rudder auto-centers
+float rudderAdjustment = rudderAngleDifference * wingInput * Time.fixedDeltaTime*0.1f; // Add Time.fixedDeltaTime for frame-rate independence
+if (rudderAngleDifference<0f){
+// Rotate the player smoothly to align with the flight path
+//transform.Rotate(0f,  0f,rudderAdjustment);
+    }
         // Character controls (rotations and thrust)
         rb.AddForce(Vector3.up * spaceInput * speed);
-        transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed /2f, horizontalInput * rotSpeed );
+        transform.Rotate(verticalInput * rotSpeed, rollInput * rotSpeed /2f, horizontalInput * rotSpeed /2f);
 
         // Reset functionality
         if (Input.GetKeyDown(KeyCode.R))
         {
             ResetGlider();
         }
-    }
+    }   
 
     void OnDrawGizmos()
     {
@@ -148,9 +200,14 @@ else
         Gizmos.DrawLine(startPosition, endPosition);
         Gizmos.DrawSphere(endPosition, 0.1f);
 
-        // Draw airflow arrow
+        // Draw sideLift arrow
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, transform.position + airflow * debugArrowScale);
+        Vector3 startPosition2 = transform.position + arrowOffset;
+        Vector3 endPosition2 = startPosition2 + sideLiftDirection  * debugArrowScale*sideLift;
+        Gizmos.DrawLine(startPosition2, endPosition2);
+        Gizmos.DrawSphere(endPosition2, 0.1f);
+
+       
     }
 
     public void ResetGlider()
