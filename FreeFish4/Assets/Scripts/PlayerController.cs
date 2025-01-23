@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
     public float verticalInput;
     public float rollInput;
 
+    public float staticJump=200f;
+
     public float wingInput;
     public float bounceForceMultiplier = 3;
     public float speed = 80.0f;
@@ -108,12 +110,12 @@ float liftCoefficient;
 // Parabolic lift curve with stall behavior
 if (Mathf.Abs(angleOfAttack) <= stallAoA)
 {
-    liftCoefficient = Mathf.Max(0f, 1f - Mathf.Pow(normalizedAoA, 2));
+    liftCoefficient = Mathf.Max(0.2f, 1f - Mathf.Pow(normalizedAoA, 2));
 }
 else
 {
     // Post-stall: Lift drops rapidly
-    liftCoefficient = Mathf.Max(0f, 1f - ((Mathf.Abs(angleOfAttack) - stallAoA) / stallAoA));
+    liftCoefficient = Mathf.Max(0.1f, 1f - ((Mathf.Abs(angleOfAttack) - stallAoA) / stallAoA));
 }
 
 
@@ -121,15 +123,24 @@ else
 
 //Debug.Log(forwardSpeed );
 
-float helpSpeed = forwardSpeed;
-if (helpSpeed<3f){
-    helpSpeed=forwardSpeed*2f;
-}
+
+float helpSpeed= forwardSpeed;
 if (helpSpeed>7f){
     helpSpeed=forwardSpeed/1.5f;
 }
 if (helpSpeed>10f){
     helpSpeed=forwardSpeed/2f;
+}
+
+float helpSpeed2= forwardSpeed;
+if (helpSpeed2>5f){
+    helpSpeed2=forwardSpeed/2f;
+}
+if (helpSpeed2>7f){
+    helpSpeed2=forwardSpeed/4f;
+}
+if (helpSpeed2>10f){
+    helpSpeed2=forwardSpeed/10f;
 }
         // Calculate lift force
         lift = liftDirection * helpSpeed * wingInput * liftCoefficient * liftMult;
@@ -141,7 +152,7 @@ if (helpSpeed>10f){
  sideLiftDirection = Vector3.Cross(transform.forward, Vector3.up).normalized;
 
 // Add lateral lift to aid turning at low speeds
-sideLift = wingInput * forwardSpeed * liftCoefficient * 0.3f; // Adjust 0.3f for tuning
+sideLift = wingInput * helpSpeed2 * liftCoefficient * 0.1f; // Adjust 0.3f for tuning
 rb.AddForce(sideLiftDirection * sideLift);
 
         // Calculate drag force (opposes airflow)
@@ -158,7 +169,7 @@ rb.AddForce(sideLiftDirection * sideLift);
         {
             Vector3 bounceDirection = transform.up; // Local "up" direction
             float accumulatedForce = rb.linearVelocity.magnitude;
-            rb.AddForce(bounceDirection * accumulatedForce * bounceForceMultiplier, ForceMode.Impulse);
+            rb.AddForce(bounceDirection *(staticJump+ accumulatedForce/5) * bounceForceMultiplier, ForceMode.Impulse);
             isTipGrounded = false; // Prevent multiple bounces
         }
 
@@ -224,6 +235,6 @@ if (rudderAngleDifference<0f){
     {
         // Apply bounce force proportional to the impact force
         Debug.Log(impactForce);
-        rb.AddForce(Vector3.up * impactForce * 10, ForceMode.Impulse);
+        rb.AddForce(Vector3.up * (staticJump) , ForceMode.Impulse);
     }
 }
