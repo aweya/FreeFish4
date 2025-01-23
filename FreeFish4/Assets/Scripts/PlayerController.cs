@@ -153,7 +153,7 @@ else
         Gizmos.DrawLine(transform.position, transform.position + airflow * debugArrowScale);
     }
 
-    void ResetGlider()
+    public void ResetGlider()
     {
         // Reset position and velocity
         rb.linearVelocity = Vector3.zero;
